@@ -80,7 +80,7 @@ async function run() {
     // Change Stream Setup
     const changeStream = taskCollection.watch();
     changeStream.on("change", async (change) => {
-      console.log(change);
+      // console.log(change);
       if (change.operationType === "insert") {
         io.emit("taskAdded", change.fullDocument);
       } else if (change.operationType === "delete") {
@@ -105,7 +105,7 @@ async function run() {
 run().catch(console.dir);
 
 app.get("/", (req, res) => {
-  res.send("Hello from SoloSphere Server....");
+  res.send("Hello from Task Management Server....");
 });
 
 server.listen(port, () => console.log(`Server running on port ${port}`));
