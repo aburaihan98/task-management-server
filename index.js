@@ -4,14 +4,9 @@ const client = require("./middleware/middleware");
 const { ObjectId } = require("mongodb");
 const cookieParser = require("cookie-parser");
 require("dotenv").config();
-const { Server } = require("socket.io");
-const http = require("http");
-const { log } = require("console");
 
 const port = process.env.PORT || 3000;
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
 
 app.use(
   cors({
@@ -53,8 +48,10 @@ async function run() {
 
     // get task
     app.get("/tasks", async (req, res) => {
-      const result = await taskCollection.find().toArray();
-      res.status(201).send(result);
+      const email = req.query.email;
+      const query = { email };
+      const result = await taskCollection.find(query).toArray();
+      res.status(200).send(result);
     });
 
     // edit tasks
@@ -77,23 +74,6 @@ async function run() {
       res.status(201).send(result);
     });
 
-    // Change Stream Setup
-    const changeStream = taskCollection.watch();
-    changeStream.on("change", async (change) => {
-      // console.log(change);
-      if (change.operationType === "insert") {
-        io.emit("taskAdded", change.fullDocument);
-      } else if (change.operationType === "delete") {
-        io.emit("taskDeleted", change.documentKey._id);
-      } else if (change.operationType === "update") {
-        io.emit(
-          "taskUpdated",
-          change.updateDescription.updatedFields,
-          change.documentKey
-        );
-      }
-    });
-
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
@@ -108,4 +88,4 @@ app.get("/", (req, res) => {
   res.send("Hello from Task Management Server....");
 });
 
-server.listen(port, () => console.log(`Server running on port ${port}`));
+app.listen(port, () => console.log(`Server running on port ${port}`));
